@@ -55,7 +55,7 @@ class Paths
 		return getPath(file, type, library);
 	}
 
-	inline static public function lua(key:String,?library:String)
+	inline static public function lua(key:String, ?library:String)
 	{
 		return getPath('data/$key.lua', TEXT, library);
 	}
@@ -88,7 +88,7 @@ class Paths
 	inline static public function soundRandom(key:String, min:Int, max:Int, ?library:String)
 	{
 		return sound(key + FlxG.random.int(min, max), library);
-	}	
+	}
 
 	inline static public function music(key:String, ?library:String)
 	{
@@ -97,13 +97,13 @@ class Paths
 
 	inline static public function voices(song:String)
 	{
-		song = StringTools.replace(song," ", "-");
+		song = StringTools.replace(song, " ", "-");
 		return 'songs:assets/songs/${song.toLowerCase()}/Voices.$SOUND_EXT';
 	}
 
 	inline static public function inst(song:String)
 	{
-		song = StringTools.replace(song," ", "-");
+		song = StringTools.replace(song, " ", "-");
 		return 'songs:assets/songs/${song.toLowerCase()}/Inst.$SOUND_EXT';
 	}
 
@@ -117,11 +117,13 @@ class Paths
 		return 'assets/fonts/$key';
 	}
 
+	#if !mobile
 	inline static public function video(key:String)
 	{
 		return 'assets/videos/$key/$key.webm';
 	}
-	
+	#end
+
 	inline static public function getSparrowAtlas(key:String, ?library:String)
 	{
 		return FlxAtlasFrames.fromSparrow(image(key, library), file('images/$key.xml', library));
