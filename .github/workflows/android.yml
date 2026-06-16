@@ -1,0 +1,61 @@
+name: Build Android
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.4
+
+      - name: Install Haxelibs
+        run: |
+          haxelib install lime --quiet
+          haxelib install openfl --quiet
+          haxelib install flixel --quiet
+          haxelib install flixel-addons --quiet
+          haxelib install flixel-ui --quiet
+          haxelib install hscript --quiet
+          haxelib install newgrounds --quiet
+          haxelib install actuate --quiet
+          haxelib git extension-androidtools https://github.com/jigsaw-4277821/extension-androidtools.git --quiet
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK
+        run: |
+          sdkmanager "ndk;25.2.9519653"
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.2.9519653" >> $GITHUB_ENV
+
+      - name: Setup Lime Android
+        run: |
+          printf 'y\n' | haxelib run lime setup android -ndkroot "$ANDROID_NDK_ROOT" -sdk "$ANDROID_SDK_ROOT" -jdk "$JAVA_HOME" -alias debug
+
+      - name: Build
+        run: haxelib run lime build android -release -final
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: FridayNightFunkin-BabyBlueBrother-Android
+          path: export/release/android/bin/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
