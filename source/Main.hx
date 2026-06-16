@@ -1,13 +1,10 @@
 package;
 
-import openfl.display.BlendMode;
 import openfl.text.TextFormat;
-import openfl.display.Application;
 import flixel.util.FlxColor;
 import flixel.FlxG;
 import flixel.FlxGame;
 import flixel.FlxState;
-import openfl.Assets;
 import openfl.Lib;
 import openfl.display.FPS;
 import openfl.display.Sprite;
@@ -15,23 +12,18 @@ import openfl.events.Event;
 
 class Main extends Sprite
 {
-	var gameWidth:Int = 1280; // Width of the game in pixels (might be less / more in actual pixels depending on your zoom).
-	var gameHeight:Int = 720; // Height of the game in pixels (might be less / more in actual pixels depending on your zoom).
-	var initialState:Class<FlxState> = TitleState; // The FlxState the game starts with.
-	var zoom:Float = -1; // If -1, zoom is automatically calculated to fit the window dimensions.
-	var framerate:Int = 120; // How many frames per second the game should run at.
-	var skipSplash:Bool = true; // Whether to skip the flixel splash screen that appears in release mode.
-	var startFullscreen:Bool = false; // Whether to start the game in fullscreen on desktop targets
+	var gameWidth:Int = 1280;
+	var gameHeight:Int = 720;
+	var initialState:Class<FlxState> = TitleState;
+	var zoom:Float = -1;
+	var framerate:Int = 120;
+	var skipSplash:Bool = true;
+	var startFullscreen:Bool = false;
 
-	public static var watermarks = true; // Whether to put Kade Engine liteartly anywhere
-
-	// You can pretty much ignore everything from here on - your code should go in your states.
+	public static var watermarks:Bool = true;
 
 	public static function main():Void
 	{
-
-		// quick checks 
-
 		Lib.current.addChild(new Main());
 	}
 
@@ -40,21 +32,15 @@ class Main extends Sprite
 		super();
 
 		if (stage != null)
-		{
 			init();
-		}
 		else
-		{
 			addEventListener(Event.ADDED_TO_STAGE, init);
-		}
 	}
 
 	private function init(?E:Event):Void
 	{
 		if (hasEventListener(Event.ADDED_TO_STAGE))
-		{
 			removeEventListener(Event.ADDED_TO_STAGE, init);
-		}
 
 		setupGame();
 	}
@@ -81,68 +67,99 @@ class Main extends Sprite
 
 		addChild(game);
 
+		#if !mobile
 		var ourSource:String = "assets/videos/DO NOT DELETE OR GAME WILL CRASH/dontDelete.webm";
-
-		var ourSource:String = "assets/videos/DO NOT DELETE OR GAME WILL CRASH/dontDelete.webm";
-
-
 
 		#if web
-		var str1:String = "HTML CRAP";
-
 		var vHandler = new VideoHandler();
-
 		vHandler.init1();
-
-		vHandler.video.name = str1;
-
+		vHandler.video.name = "HTML CRAP";
 		addChild(vHandler.video);
-
 		vHandler.init2();
-
 		GlobalVideo.setVid(vHandler);
-
 		vHandler.source(ourSource);
-
 		#elseif desktop
-
-		var str1:String = "WEBM SHIT"; 
-
 		var webmHandle = new WebmHandler();
-
 		webmHandle.source(ourSource);
-
 		webmHandle.makePlayer();
-
-		webmHandle.webm.name = str1;
-
+		webmHandle.webm.name = "WEBM SHIT";
 		addChild(webmHandle.webm);
-
 		GlobalVideo.setWebm(webmHandle);
 		#end
+		#end
 
-		#if !mobile
+		#if mobile
+		setupMobileFPS();
+		#else
 		fpsCounter = new FPS(10, 3, 0xFFFFFF);
 		addChild(fpsCounter);
 		toggleFPS(FlxG.save.data.fps);
-
 		#end
 	}
 
 	var game:FlxGame;
 
-	var fpsCounter:FPS;
+	#if mobile
+	var mobileFPS:openfl.text.TextField;
+	var _fpsTime:Float = 0;
+	var _fpsFrames:Int = 0;
+	var _currentFPS:Int = 0;
 
-	public function toggleFPS(fpsEnabled:Bool):Void {
-		fpsCounter.visible = fpsEnabled;
-	}
-
-	public function changeFPSColor(color:FlxColor)
+	private function setupMobileFPS():Void
 	{
-		fpsCounter.textColor = color;
+		mobileFPS = new openfl.text.TextField();
+		mobileFPS.defaultTextFormat = new TextFormat("_sans", 16, 0xFFFFFF, true);
+		mobileFPS.x = 10;
+		mobileFPS.y = 3;
+		mobileFPS.width = 200;
+		mobileFPS.height = 30;
+		mobileFPS.selectable = false;
+		mobileFPS.mouseEnabled = false;
+		mobileFPS.visible = FlxG.save.data.fps != null ? FlxG.save.data.fps : true;
+		addChild(mobileFPS);
+		Lib.current.stage.addEventListener(Event.ENTER_FRAME, updateMobileFPS);
 	}
 
-	public function setFPSCap(cap:Float)
+	private function updateMobileFPS(_:Event):Void
+	{
+		_fpsFrames++;
+		var now:Float = haxe.Timer.stamp();
+		if (now - _fpsTime >= 1.0)
+		{
+			_currentFPS = _fpsFrames;
+			_fpsFrames = 0;
+			_fpsTime = now;
+		}
+		if (mobileFPS != null && mobileFPS.visible)
+			mobileFPS.text = _currentFPS + " FPS";
+	}
+	#else
+	var fpsCounter:FPS;
+	#end
+
+	public function toggleFPS(fpsEnabled:Bool):Void
+	{
+		#if mobile
+		if (mobileFPS != null)
+			mobileFPS.visible = fpsEnabled;
+		#else
+		if (fpsCounter != null)
+			fpsCounter.visible = fpsEnabled;
+		#end
+	}
+
+	public function changeFPSColor(color:FlxColor):Void
+	{
+		#if mobile
+		if (mobileFPS != null)
+			mobileFPS.defaultTextFormat = new TextFormat("_sans", 16, color, true);
+		#else
+		if (fpsCounter != null)
+			fpsCounter.textColor = color;
+		#end
+	}
+
+	public function setFPSCap(cap:Float):Void
 	{
 		openfl.Lib.current.stage.frameRate = cap;
 	}
@@ -154,6 +171,10 @@ class Main extends Sprite
 
 	public function getFPS():Float
 	{
-		return fpsCounter.currentFPS;
+		#if mobile
+		return _currentFPS;
+		#else
+		return fpsCounter != null ? fpsCounter.currentFPS : 0;
+		#end
 	}
 }
