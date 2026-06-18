@@ -30,6 +30,7 @@ jobs:
         run: |
           haxelib install lime --quiet
           haxelib install openfl --quiet
+          haxelib install flixel 4.11.0 --quiet
           haxelib install flixel --quiet
           haxelib install flixel-addons --quiet
           haxelib install flixel-ui --quiet
