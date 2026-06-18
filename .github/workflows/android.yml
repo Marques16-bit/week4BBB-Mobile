@@ -48,8 +48,11 @@ jobs:
 
       - name: Setup Lime Android
         run: |
-          printf 'y\n' | haxelib run lime setup android -ndkroot "$ANDROID_NDK_ROOT" -sdk "$ANDROID_SDK_ROOT" -jdk "$JAVA_HOME" -alias debug
-
+             haxelib run lime config ANDROID_SDK "$ANDROID_SDK_ROOT"
+             haxelib run lime config ANDROID_NDK_ROOT "$ANDROID_NDK_ROOT"
+             haxelib run lime config JAVA_HOME "$JAVA_HOME"
+             printf 'y\n' | haxelib run lime setup android
+            
       - name: Build
         run: haxelib run lime build android -release -final
 
